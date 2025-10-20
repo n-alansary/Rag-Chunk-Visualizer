@@ -1,84 +1,76 @@
-# Final RAG Chunk Visualizer — README
+# RAG Chunk Visualizer 📊
 
-A focused README for the final RAG chunk visualizer pipeline. This project runs chunking → topic modeling (via an LLM chat client) → dimensionality reduction → 3D visualization and writes an interactive HTML output.
+**A compact guide to running the LLM-powered Topic Modeling and 3D Visualization pipeline.**
 
-## Purpose
-Use a chat-based LLM (Groq chat in this codebase) to perform topic assignment for text chunks, then visualize the resulting topics in 3D for inspection and analysis.
+This project implements a pipeline to visualize text chunks based on **LLM-assigned topics** in an interactive 3D space.
 
-## Files and responsibilities
-- `final_demo.py`  
-  - Example runner that prepares sample text (or reads a PDF), splits it into chunks, and invokes the pipeline. Produces `topic_visualization_3d.html` by default.
-- `llm_chat_client.py`  
-  - Lightweight Groq chat wrapper (`GroqChatClient`) used to send prompts and receive responses from the LLM. Maintains conversation history and exposes `chat_with_groq(prompt, model)`.
-- `base_topic_modeller.py`  
-  - `TopicModeler` that coordinates the LLM-based topic modeling interaction: it seeds the assistant, streams chunks to the assistant, collects string-pair responses (expected format `(topic_number, "keyword1_keyword2")`), and parses them into topic numbers and keywords.
-- `llm_topic_modelling_structured.py`  
-  - High-level pipeline (`TopicModelingPipeline`) that ties the chat client, topic modeler, and visualizer together. Runs topic modeling and hands the results to the visualizer.
-- `topic_visualizer.py`  
-  - `TopicVisualizer` that converts chunk text into TF-IDF vectors, applies UMAP (3D by default), and renders an interactive Plotly 3D scatter with hover text and a colorbar keyed by topic number.
+## Features ✨
 
-## Pipeline (high level)
-1. Text ingestion: `final_demo.py` loads text (sample_text or PDF).
-2. Chunking: `RecursiveCharacterTextSplitter` splits text into chunks.
-3. Topic modeling (LLM): `base_topic_modeller.TopicModeler` sends each chunk to the LLM via `GroqChatClient`, collects tuples of `(topic_number, keywords)` per chunk.
-4. Projection: `topic_visualizer` vectorizes chunks with TF-IDF, uses UMAP to project to 3D.
-5. Visualization: Plotly 3D scatter is written to `topic_visualization_3d.html`.
+* **Intelligent Topic Assignment:** Uses a chat-based LLM (Groq chat) to assign a specific topic and representative keywords to each text chunk.
+* **Vectorization & Projection:** Converts chunks to **TF-IDF vectors** and uses **UMAP** for non-linear dimensionality reduction into a 3D space.
+* **Interactive Visualization:** Generates a stunning, interactive **Plotly 3D HTML scatter plot** (`topic_visualization_3d.html`).
+* **Deep Inspection:** Hover over points in the 3D plot to view the **chunk text, assigned topic number, and keywords** for detailed inspection and analysis.
 
-## How to run (example)
-1. Create and activate a Python environment (Python 3.10+ recommended).
-2. Install dependencies (example packages below).
-3. Run final_demo.py.
 
-The demo will:
-- Build chunks from the embedded `sample_text` (or read `harry_potter_book.pdf` if you enable the PDF reading code).
-- Run the topic modeling pipeline.
-- Write `topic_visualization_3d.html` to the current directory.
-## Dependencies & setup (recommended)
-This project was developed and tested with Python 3.10. To create an isolated environment and install all required packages from a `requirements.txt`, follow the steps below (Windows / cmd examples).
 
-1) Verify Python 3.10 is available (optional):
+***
+
+## 🚀 Getting Started
+
+Follow these steps to set up the environment and run the demo.
+
+### Prerequisites
+
+* **Python 3.10+** (Recommended)
+* A **Groq API Key** (for the LLM topic assignment).
+
+### Environment Setup
+
+It's highly recommended to use a virtual environment to manage dependencies.
+
+1.  **Verify Python 3.10** (Optional):
+    ```cmd
+    py -3.10 --version
+    ```
+
+2.  **Create and Activate Virtual Environment:**
+    ```cmd
+    py -3.10 -m venv .venv
+    .venv\Scripts\activate  # Windows (cmd)
+    # OR
+    source .venv/bin/activate # macOS/Linux
+    ```
+
+3.  **Install Dependencies:** (Ensure you have a `requirements.txt` file)
+    ```cmd
+    pip install -r requirements.txt
+    ```
+
+### Configuration: Set Your API Key
+
+The pipeline requires a **Groq API Key**. **DO NOT** hardcode keys in `final_demo.py`.
+
+**Recommended Approach (using Environment Variable):**
+
+1.  Set the API key in your shell:
+    * **Windows (cmd):** `set GROQ_API_KEY=your-api-key-here`
+    * **macOS/Linux:** `export GROQ_API_KEY=your-api-key-here`
+
+2.  Ensure `final_demo.py` is updated to read the key:
+    ```python
+    import os
+    # ... inside final_demo.py
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY environment variable not set.")
+    pipeline = TopicModelingPipeline(api_key=api_key, ...)
+    ```
+
+***
+
+## 🏃 How to Run the Demo
+
+Once your environment is active and the API key is set, execute the runner file:
 
 ```cmd
-py -3.10 --version
-```
-
-2) Create a Python 3.10 virtual environment in the project folder:
-
-```cmd
-py -3.10 -m venv .venv
-```
-
-3) Activate the virtual environment (Windows cmd):
-
-```cmd
-.venv\Scripts\activate
-```
-
-4) Install dependencies from `requirements.txt` (run inside the activated venv):
-
-```cmd
-pip install -r requirements.txt
-```
-
-After installing, run `python final_demo.py` from this folder with the virtual environment activated.
-
-## Configuration and API keys
-- The pipeline requires a Groq API key for `GroqChatClient`. The example `final_demo.py` currently constructs `TopicModelingPipeline(api_key='...')`. Do not leave API keys in source code.
-- Recommended: store the API key in an environment variable and update `final_demo.py` to read it, e.g.:
-  ```python
-  import os
-  api_key = os.environ.get("GROQ_API_KEY")
-  pipeline = TopicModelingPipeline(api_key=api_key)
-  ```
-- Rotate and remove keys if they were accidentally committed.
-
-## Output
-- `topic_visualization_3d.html` — interactive 3D HTML file produced by Plotly. Open it in a browser to explore points, hover for chunk text, topic number, and topic keywords.
-
-## Expected formats and assumptions
-- The LLM is expected to return exactly one pair per chunk in the strict format: `(topic_number, "keyword1_keyword2_keyword3")`. `base_topic_modeller` will parse this. If the model deviates, parsing will fail.
-- Topic numbers are integers and should map consistently across chunks.
-- UMAP is used on TF-IDF vectors of chunks for projection; you can replace with other dimensionality reducers (t-SNE, PCA) if desired.
-
-
-
+python final_demo.py
