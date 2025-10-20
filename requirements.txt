@@ -1,0 +1,8 @@
+sentence-transformers
+numpy
+plotly
+scikit-learn
+umap-learn
+langchain_text_splitters
+pypdf
+groq
